@@ -94,7 +94,7 @@ public class CustomizeShiroRealm extends AuthorizingRealm {
             return executeLogin((UsernamePasswordToken) authenticationToken);
 
         } else if (authenticationToken instanceof CustomizeAuthenticationToken) {
-
+            //token
             return executeVerify((CustomizeAuthenticationToken) authenticationToken);
         }
 
@@ -116,23 +116,26 @@ public class CustomizeShiroRealm extends AuthorizingRealm {
         String username = (String) usernamePasswordToken.getPrincipal();
         //密码
         String credential = new String((char[]) usernamePasswordToken.getCredentials());
+        log.info("用户 {} 登录....",username);
 
         User user = userService.findByLoginName(username);
+        //未有该用户
         if (user == null) {
+            log.info("用户不存在");
             throw new UnknownAccountException();
         }
 
         String salt = user.getSalt();
-        String password = new Md5Hash(credential, salt, Constast.HASHITERATIONS).toString();
-        ByteSource byteSource = ByteSource.Util.bytes(user.getSalt());
-        UserHolder.set(user);
-        if (!StringUtils.equals(user.getPassword(), password)) {
-            log.info("用户名或者密码输入错误....");
-            throw new IncorrectCredentialsException();
+        String passwordInDB = user.getPassword();
+        String nowPassword = new Md5Hash(credential,salt, Constast.HASHITERATIONS).toString();
 
+        //判断密码是否正确
+        if (! nowPassword.equals(passwordInDB)) {
+            throw new IncorrectCredentialsException();
         }
 
-        return new SimpleAuthenticationInfo(user.getLoginName(), user.getPassword(), byteSource, getName());
+        UserHolder.set(user);
+        return new SimpleAuthenticationInfo(user, credential, getName());
 
     }
 
@@ -148,14 +151,15 @@ public class CustomizeShiroRealm extends AuthorizingRealm {
 
         //获得token
         String token = (String) authenticationToken.getPrincipal();
-        if (!userLoginVoRedisTemplate.hasKey(token)) {
+        UserLoginVo vo = userLoginVoRedisTemplate.opsForValue().get(token);
+        if (vo == null) {
             log.info("token 过期....");
             throw new ExpiredCredentialsException();
         }
-        UserLoginVo vo = userLoginVoRedisTemplate.opsForValue().get(token);
+
         User user = new User();
 
-        BeanUtils.copyProperties(vo, user);
+        user = userService.findById(vo.getId());
 
         UserHolder.set(user);
 
@@ -163,6 +167,7 @@ public class CustomizeShiroRealm extends AuthorizingRealm {
 
 
     }
+
 }
 
 

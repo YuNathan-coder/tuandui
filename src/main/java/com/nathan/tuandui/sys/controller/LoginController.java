@@ -1,6 +1,7 @@
 package com.nathan.tuandui.sys.controller;
 
 import com.nathan.tuandui.sys.common.consts.Constast;
+import com.nathan.tuandui.sys.common.enums.ErrorCodeEnums;
 import com.nathan.tuandui.sys.common.holder.UserHolder;
 import com.nathan.tuandui.sys.common.utils.OptResult;
 import com.nathan.tuandui.sys.common.utils.TokenGenerator;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.subject.Subject;
@@ -60,14 +62,19 @@ public class LoginController {
 
         token = new UsernamePasswordToken(username, password, false);
 
-        SecurityUtils.getSubject().login(token);
-        User user = UserHolder.get();
-        // 获取token
-        String userToken = TokenGenerator.generateValue();
-        UserLoginVo vo = UserToken2UserLoginVoConverter.convert(user, userToken);
-        // 放入 redis, 8小时后过期
-        userLoginVoRedisTemplate.opsForValue().set(userToken, vo, 8, TimeUnit.HOURS);
-        return OptResult.ok(vo);
+        try {
+            SecurityUtils.getSubject().login(token);
+            User user = UserHolder.get();
+            // 获取token
+            String userToken = TokenGenerator.generateValue();
+            UserLoginVo vo = UserToken2UserLoginVoConverter.convert(user, userToken);
+            // 放入 redis, 8小时后过期
+            userLoginVoRedisTemplate.opsForValue().set(userToken, vo, 8, TimeUnit.HOURS);
+            return OptResult.ok(vo);
+        } catch (AuthenticationException e) {
+            log.info("账号密码错误");
+            return OptResult.error(ErrorCodeEnums.USERNAME_OR_PASSWORD_ERROR);
+        }
     }
 
 

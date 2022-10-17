@@ -4,14 +4,20 @@ package com.nathan.tuandui.sys.authentication;
 import com.google.gson.Gson;
 import com.nathan.tuandui.sys.common.enums.ErrorCodeEnums;
 import com.nathan.tuandui.sys.common.utils.OptResult;
+import com.nathan.tuandui.sys.entity.User;
+import com.nathan.tuandui.sys.vo.UserLoginVo;
 import jdk.nashorn.internal.runtime.regexp.joni.constants.OPCode;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.authc.ExpiredCredentialsException;
 import org.apache.shiro.authc.LockedAccountException;
 import org.apache.shiro.web.filter.authc.AuthenticatingFilter;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
 
 import javax.servlet.ServletRequest;
@@ -29,6 +35,8 @@ import java.io.IOException;
  */
 @Slf4j
 public class CustomizeShiroFilter extends AuthenticatingFilter {
+
+
     @Override
     protected AuthenticationToken createToken(ServletRequest request, ServletResponse servletResponse) throws Exception {
         String token = getToken((HttpServletRequest) request);
@@ -65,7 +73,9 @@ public class CustomizeShiroFilter extends AuthenticatingFilter {
                 httpResponse.getWriter().print(json);
                 return false;
             }
+
             // 走到自定义的realm
+
             return executeLogin(request, response);
         }
     }

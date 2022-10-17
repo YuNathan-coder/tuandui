@@ -62,7 +62,6 @@ public class ShiroConfig {
     @Bean
     public DefaultWebSecurityManager securityManager(DefaultWebSessionManager defaultWebSessionManager,
                                                      @Lazy CustomizeShiroRealm customizeShiroRealm) {
-        customizeShiroRealm.setCredentialsMatcher(hashedCredentialsMatcher());
         DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
         securityManager.setSessionManager(defaultWebSessionManager);
         securityManager.setRealm(customizeShiroRealm);
@@ -143,19 +142,7 @@ public class ShiroConfig {
     }
 
 
-    /**
-     * 加密设置
-     * @return
-     */
-    @Bean("hashedCredentialsMatcher")
-    public HashedCredentialsMatcher hashedCredentialsMatcher() {
-        HashedCredentialsMatcher credentialsMatcher = new HashedCredentialsMatcher();
-        credentialsMatcher.setHashAlgorithmName("MD5");
-        //设置散列次数
-        credentialsMatcher.setHashIterations(Constast.HASHITERATIONS);
 
-        return credentialsMatcher;
-    }
 
 
 
